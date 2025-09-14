@@ -207,16 +207,18 @@ echo ""
 
 # 显示变更文件列表
 echo -e "${BLUE}📝 变更文件:${NC}"
-git diff --cached --name-status | while IFS=$'\t' read -r status file; do
-    status_icon=""
-    case "$status" in
-        "A") status_icon="${GREEN}➕${NC}" ;;
-        "M") status_icon="${YELLOW}📝${NC}" ;;
-        "D") status_icon="${RED}➖${NC}" ;;
-        "R"*) status_icon="${PURPLE}🔄${NC}" ;;
-        *) status_icon="${CYAN}❓${NC}" ;;
-    esac
-    echo -e "  $status_icon $file"
+git diff --cached --name-status | while read -r status file; do
+    if [[ -n "$status" ]] && [[ -n "$file" ]]; then
+        status_icon=""
+        case "$status" in
+            "A") status_icon="${GREEN}➕${NC}" ;;
+            "M") status_icon="${YELLOW}📝${NC}" ;;
+            "D") status_icon="${RED}➖${NC}" ;;
+            "R"*) status_icon="${PURPLE}🔄${NC}" ;;
+            *) status_icon="${CYAN}❓${NC}" ;;
+        esac
+        echo -e "  $status_icon $file"
+    fi
 done
 echo ""
 
@@ -229,48 +231,11 @@ done
 echo -e "${CYAN}└─────────────────────────────────────────────────────────────┘${NC}"
 echo ""
 
-# 询问用户确认
-echo -e "${YELLOW}❓ 是否使用此commit message提交? (y/n/e)${NC}"
-echo "   y - 确认提交"
-echo "   n - 取消提交"
-echo "   e - 编辑commit message"
-read -r choice
-
-case "$choice" in
-    [Yy]|[Yy][Ee][Ss]|"")
-        echo -e "${GREEN}✅ 正在提交...${NC}"
-        git commit -m "$(echo -e "$commit_message")"
-        echo -e "${GREEN}🎉 提交成功!${NC}"
-        echo -e "${BLUE}💡 提示: 使用 'git push' 推送到远程仓库${NC}"
-        ;;
-    [Ee]|[Ee][Dd][Ii][Tt])
-        echo -e "${BLUE}📝 打开编辑器编辑commit message...${NC}"
-        # 创建临时文件
-        temp_file=$(mktemp)
-        echo -e "$commit_message" > "$temp_file"
-        
-        # 使用用户默认编辑器或vim
-        ${EDITOR:-vim} "$temp_file"
-        
-        # 读取编辑后的内容
-        if [[ -s "$temp_file" ]]; then
-            final_message=$(cat "$temp_file")
-            echo -e "${GREEN}✅ 正在提交...${NC}"
-            git commit -m "$final_message"
-            echo -e "${GREEN}🎉 提交成功!${NC}"
-            echo -e "${BLUE}💡 提示: 使用 'git push' 推送到远程仓库${NC}"
-        else
-            echo -e "${RED}❌ Commit message为空，取消提交${NC}"
-        fi
-        
-        # 清理临时文件
-        rm -f "$temp_file"
-        ;;
-    *)
-        echo -e "${YELLOW}⏹️  取消提交${NC}"
-        echo -e "${BLUE}💡 提示: 文件仍在暂存区，可以稍后提交${NC}"
-        ;;
-esac
+# 直接提交，不询问用户确认
+echo -e "${GREEN}✅ 正在提交...${NC}"
+git commit -m "$(echo -e "$commit_message")"
+echo -e "${GREEN}🎉 提交成功!${NC}"
+echo -e "${BLUE}💡 提示: 使用 'git push' 推送到远程仓库${NC}"
 
 # 显示当前Git状态
 echo ""
